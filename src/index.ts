@@ -133,7 +133,7 @@ export const match = async (hobbies: string[], amount: number) => {
 
     const sorted = arr_matches.sort((a, b) => b[1] - a[1]);
     
-    const return_arr: [string, number][] = [];
+    const return_arr: string[] = [];
 
     const picked_indexes: number[] = [];
 
@@ -143,7 +143,6 @@ export const match = async (hobbies: string[], amount: number) => {
         const element = sorted[i];
         let picked = element;
 
-        console.log(element);
 
         let index = i;
  
@@ -152,12 +151,11 @@ export const match = async (hobbies: string[], amount: number) => {
         }while(picked_indexes.some(v => v===index))
 
         if(element[1] === 1){
-            console.log(index);
             picked = sorted[index];            
         }
 
-        if(!return_arr.some(v => v === picked)){
-            return_arr.push(picked);
+        if(!return_arr.some(v => v === picked[0])){
+            return_arr.push(picked[0]);
             picked_indexes.push(i);
         }
 
