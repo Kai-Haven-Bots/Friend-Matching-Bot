@@ -74,7 +74,10 @@ client.once('ready', async (client) => {
 export const harvest_info = async (msg: Message | PartialMessage) => {
     if (!msg.content) return;
     if (!msg.author) return;
-    if (msg.channelId !== INTRO_CHANNEL_ID) return;
+    if (msg.channelId !== INTRO_CHANNEL_ID && msg.channelId !== "1008752982000676894") return;
+    console.log(msg.content);
+    
+    
     if (msg.author ?.bot) return;
 
     if (msg.channel.isThread()) return;

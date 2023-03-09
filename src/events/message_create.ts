@@ -7,6 +7,12 @@ export const message_listen = (client: Client) => {
         harvest_info(msg);
         search(msg);
     })
+
+    client.on('threadCreate', async thread => {
+        const msg = await thread.fetchStarterMessage();
+        if(msg === null) return;
+        harvest_info(msg);
+    })
 }
 
 export const search = async (msg: Message) => {
