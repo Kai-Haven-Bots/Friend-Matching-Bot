@@ -37,9 +37,9 @@ export const search = async (msg: Message) => {
             }
         })
 
-        const member = await msg.guild?.members.fetch(match);
+        const user = await msg.client.users.fetch(match);
         const hobbies = (user_model?.get("hobbies") as string).split(",").join(', ');
-        fields.push({inline: false, name: member?.user.username + "#" + member?.user.discriminator, value: `hobbies: ${hobbies}`})
+        fields.push({inline: false, name:  user.username + "#" + user.discriminator, value: `hobbies: ${hobbies}`})
     }
 
     embed.setFields(fields);
