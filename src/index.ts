@@ -1,13 +1,35 @@
-import { Client, GuildBasedChannel, GuildTextBasedChannel, IntentsBitField} from 'discord.js';
+import {
+    Client,
+    GuildBasedChannel,
+    GuildTextBasedChannel,
+    IntentsBitField,
+    Message,
+    PartialMessage
+} from 'discord.js';
 import * as path from 'path';
 import * as fs from 'fs';
-import { CHAR, STRING, Sequelize } from 'sequelize';
-import { getResponse } from './AI/openAI';
+import {
+    CHAR,
+    Model,
+    Op,
+    STRING,
+    Sequelize
+} from 'sequelize';
+import {
+    intro_to_json
+} from './AI/openAI';
+import {
+    message_listen
+} from './events/message_create';
+import {
+    message_edit_listen
+} from './events/message_edit';
 
 require('dotenv').config({
     path: path.join(__dirname, ".env")
 })
 
+export const INTRO_CHANNEL_ID = "908893077886861342";
 
 export const sequelize = new Sequelize({
     dialect: 'sqlite',
@@ -26,20 +48,14 @@ fs.readdirSync(path_to_models)
 
 
 
-const messages_model = sequelize.define('messages', {
-    userId: {
-        type: CHAR(50)
-    },
-    time: {
-        type: CHAR(100)
-    },
-    msg: {
-        type: STRING
-    }
-})
-
-sequelize.sync({alter: true}).then(sequelize => {
+sequelize.sync({
+    alter: true
+}).then(sequelize => {
     client.login(process.env._TOKEN);
+    match(["movies", "games"], 5).then(s => {
+        console.log(s);
+    });
+
 })
 
 
@@ -51,99 +67,113 @@ const client = new Client({
 
 client.once('ready', async (client) => {
     console.log("ready");
+    message_listen(client);
+    message_edit_listen(client);
 })
 
-getResponse(`names: ame, siege, fraudie, james, bradley, luke, felix :Hero_ExhaustedOE: 
-:melody_wave: he/it :melody_sparkles: 
-age: over 10 under 16
-fandoms :davidswag: 
-:point: 126 :fucknotagain: 
-:point: arknights :DuskLove: 
-:point: ddlc :yuriuwu: 
-:point: omori :Spin_KelDWOE: 
-:point: hotel dusk:pride_flag_mlm: 
-:point: professor layton :ilovelayton: 
-:point: needy streamer overload :ame_smile: 
-:WThumbsUp: hobbies:WDance: 
-next to none so not wasting text :IntenseGrab:
-:heart_firework: Likes :heart_firework: 
-:arrowblack: silly things:ame_smile: 
-:arrowblack: drawing (in school):stickmanfast: 
-:arrowblack: talking about 126:OMG: 
-:arrowblack: carisle :TeamHarleen: 
-:arrowblack: random emojis
-dislikes (& phobias)
-worms DO NOT MENTION NEAR ME :BlackExclaim: 
-spit+saliva+mucus can tolerate
-please don't reality check :icon_heart: 
-bonus: I can play the guitar kinda (forgot how to do all the chords :basil_cry:)`).then(r => console.log(r.hobbies));
+export const harvest_info = async (msg: Message | PartialMessage) => {
+    if (!msg.content) return;
+    if (!msg.author) return;
+    if (msg.channelId !== INTRO_CHANNEL_ID) return;
+    if (msg.author ?.bot) return;
 
-const scrape_messages = async (client: Client, channelId: string, messages: number) => {
- const start = Date.now();
+    if (msg.channel.isThread()) return;
 
- const channel = (await client.channels.fetch(channelId)) as GuildTextBasedChannel;
+    const info = await intro_to_json(msg.content, msg.author ?.id);
 
-    let json = [];
-    let last = "";
+    if (info.name === "err") return;
+    if (info.name === "none") info.name = msg.author.username
 
-    let loops = messages/100;
-    if(loops<1){
-        console.log("messages amount must be above 100");
-        return; 
+    info.hobbies = (info.hobbies as string[]).join(',');
+    const users_model = sequelize.model("users");
+
+    const [model, created] = await users_model.findOrCreate({
+        where: {
+            userId: msg.author.id
+        },
+        defaults: info
+    })
+
+    if (!created) {
+        model.update(info);
     }
 
-    let j = 0;
-    for(let i = 0; i < loops; i++){
-        let messages;
+    console.log(info);
 
-        if(last !== ""){
-            messages = await channel.messages.fetch({before: last, limit: 100})
-        }else{
-            messages = await channel.messages.fetch({limit: 100});
+
+}
+
+export const match = async (hobbies: string[], amount: number) => {
+    const users_model = sequelize.model("users");
+
+    const matches = new Map < string,
+        number > ();
+
+    for (const hobby of hobbies) {
+        const users = await users_model.findAll({
+            where: {
+                hobbies: {
+                    [Op.like]: `%${hobby}%`
+                }
+            }
+        })
+
+        users.forEach(model => {
+            const userId = model.get("userId") as string;
+
+            if (matches.has(userId)) {
+                matches.set(userId, matches.get(userId) as number + 1)
+            } else {
+                matches.set(userId, 1);
+            }
+        })
+    }
+    
+    const arr_matches = [...matches];
+
+    const sorted = arr_matches.sort((a, b) => b[1] - a[1]);
+    
+    const return_arr: [string, number][] = [];
+
+    const picked_indexes: number[] = [];
+
+    for(let i = 0; i < amount; i++){
+        if(sorted[i] === undefined) break;
+
+        const element = sorted[i];
+        let picked = element;
+
+        console.log(element);
+
+        let index = i;
+ 
+        do{
+            index = Math.floor(Math.random() * sorted.length);
+        }while(picked_indexes.some(v => v===index))
+
+        if(element[1] === 1){
+            console.log(index);
+            picked = sorted[index];            
         }
 
-        for(let message of messages){
-            let msg = message[1];
-            j++
-            if(msg.content !== ""){
-                  const content = msg.content.replace(/['"\\;]|--|\/\*/g, "");
-
-                 json.push({userId: msg.author.id, msg: content, time: msg.createdTimestamp});
-                 console.log(`${j}. ${content} time_elapsed: ${Math.round( (Date.now() - start)/1000)} seconds`);
-            }
-
-            if(j%100 === 0){
-                messages_model.bulkCreate(json);
-                json = [];
-            }
-           
-            last = message[0];
+        if(!return_arr.some(v => v === picked)){
+            return_arr.push(picked);
+            picked_indexes.push(i);
         }
-        
+
     }
 
-    messages_model.bulkCreate(json);
-    const stop = Date.now();
-
-    console.log(`time taken: ${stop - start} milliseconds`);
+    return return_arr;
     
 }
 
 export type userData = {
-    name: string, 
+    userId: string,
+    name: string,
     age: number,
     gender: string,
-    hobbies: string [],
+    hobbies: string[] | string,
     emotionalState: string,
     extraInfo: string
-    
+
 }
-
-
-
-
-
-
-
-
-

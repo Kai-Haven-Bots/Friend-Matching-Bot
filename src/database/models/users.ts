@@ -8,9 +8,22 @@ export const model = (sequelize: Sequelize) => {
         },
         name: {
             type: STRING,
+            allowNull: false
         },
-        interests: {
+        age: {
+            type: INTEGER
+        },
+        hobbies: {
+            type: STRING
+        },
+        pronoun: {
+            type: CHAR(20)
+        },
+        emotionalState: {
+            type: STRING
+        },
+        extraInfo: {
             type: STRING
         }
-    })
+ })
 }
