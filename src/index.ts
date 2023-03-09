@@ -69,10 +69,19 @@ client.once('ready', async (client) => {
     console.log("ready");
     message_listen(client);
     message_edit_listen(client);
+
+    const channel = (await client.channels.fetch("908893077886861342")) as GuildTextBasedChannel;
+    const messages = await channel.messages.fetch({limit: 100})
+
+    for(let msg of messages){
+      await harvest_info(msg[1]);
+    }
+    
 })
 
 export const harvest_info = async (msg: Message | PartialMessage) => {
     if (!msg.content) return;
+    if(msg.content === '') return;
     if (!msg.author) return;
     if (msg.channelId !== INTRO_CHANNEL_ID && msg.channelId !== "1008752982000676894") return;
     console.log(msg.content);
