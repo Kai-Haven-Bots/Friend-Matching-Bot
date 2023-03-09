@@ -24,9 +24,16 @@ export const search = async (msg: Message) => {
 
     const matches = await match(args, 5);
 
+   
     const users_model = sequelize.model('users');
     const embed = new EmbedBuilder()
         .setColor('Yellow');
+
+    if(matches.length === 0){
+        embed.setDescription('# no one found with that hobby!')
+        msg.reply({embeds: [embed], allowedMentions: {repliedUser: false}});
+        return;
+    }
 
     const fields: EmbedField[] = [];
 
