@@ -17,19 +17,19 @@ export const message_listen = (client: Client) => {
 export const search = async (msg: Message) => {
     const content = msg.content.toLowerCase();
 
+    if(content === 'find friends'){
+        const argsEmbed = new EmbedBuilder();
+        argsEmbed.setDescription('# please mention at least one hobby')
+        msg.reply({embeds: [argsEmbed], allowedMentions: {repliedUser: false}});
+        return;
+    }
+
     if(!content.startsWith('find friends')) return;
     const args = content.replace('find friends', '').split(",").map(v => {
         if(v.startsWith(" ")) v = v.trimStart();
         if(v.endsWith(" ")) v = v.trimEnd();
         return v;
     });
-
-    const argsEmbed = new EmbedBuilder();
-    if(args.length === 0){
-        argsEmbed.setDescription('# please mention at least one hobby')
-        msg.reply({embeds: [argsEmbed], allowedMentions: {repliedUser: false}});
-        return;
-    }
 
     const matches = await match(args, 5);
 
