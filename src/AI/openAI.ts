@@ -59,6 +59,7 @@ export const intro_to_json = async (text: string, userId: string): Promise<userD
     })
 
     console.log(response.data.choices[0].message);
+    const raw_result = response.data.choices[0].message?.content as string;
 
     let result: userData;
 
@@ -77,7 +78,7 @@ export const intro_to_json = async (text: string, userId: string): Promise<userD
         return {name: 'err', age: 0, emotionalState: '', extraInfo: '', gender: 'none', hobbies: [], userId: userId}
     }
     
-    if(!result.age ) result.age = 0;
+    if(!result.age) result.age = 0;
     if(!result.emotionalState ) result.emotionalState = "";
     if(!result.extraInfo) result.extraInfo = "";
     if(!result.gender) result.gender = "other"
