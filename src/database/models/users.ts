@@ -19,6 +19,9 @@ export const model = (sequelize: Sequelize) => {
         pronoun: {
             type: CHAR(20)
         },
+        gender: {
+            type: CHAR(50)
+        },
         emotionalState: {
             type: STRING
         },

@@ -1,19 +1,20 @@
-import { Configuration, OpenAIApi } from "openai";
 import * as path from 'path';
 import { userData } from "../index";
 import jsonlint from 'jsonlint';
+import OpenAI from 'openai';
+
+let openai: OpenAI; 
 
 require('dotenv')
     .config({
          path: path.join(__dirname, "..", ".env")
     })
 
-
-const configuration = new Configuration({
-    apiKey: process.env.KEY,
-});
-const openai = new OpenAIApi(configuration);
-
+export const config_openai = () => {
+    openai = new OpenAI({
+        apiKey: process.env.KEY,
+    });
+}
 
 const prompt = `Assistant extracts name, age, pronoun, hobbies (array, simplified and shortened), emotional state and extraInfo from text. extraInfo for additional info\n`;
 
@@ -35,60 +36,61 @@ const training_output = `{
 }`
 
 export const intro_to_json = async (text: string, userId: string): Promise<userData> => {
+    let result: userData = {
+        userId: userId,
+        name: "none",
+        age: 0,
+        gender: "other",
+        hobbies: [],
+        emotionalState: "",
+        extraInfo: ""
+    };
 
-    const response = await openai.createChatCompletion({
-        model: "gpt-3.5-turbo",
-        messages: [
-            {role: "system", content: prompt},
-            {role: "user", content: training_input},
-            {role: "system", content: training_output},
-            {role: "user", content: "Hi I am Ox, I like boxing"},
-            {role: "assistant", content: `{
-                "name": "Ox",
-                "age": 0,
-                "pronoun": "other",
-                "hobbies": ["boxing"],
-                "emotionalState": "",
-                "extraInfo": ""
-            }`},
-            {role: "user", content: `input: "${text}"`}
-        ],
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+                {role: "system", content: prompt},
+                {role: "user", content: training_input},
+                {role: "system", content: training_output},
+                {role: "user", content: "Hi I am Ox, I like boxing"},
+                {role: "assistant", content: `{
+                    "name": "Ox",
+                    "age": 0,
+                    "pronoun": "other",
+                    "hobbies": ["boxing"],
+                    "emotionalState": "",
+                    "extraInfo": ""
+                }`},
+                {role: "user", content: `input: "${text}"`}
+            ],
+            temperature: 0
+        });
 
-        temperature: 0
-        
-    })
+        console.log(response.choices[0].message);
+        const raw_result = response.choices[0].message?.content as string;
 
-    console.log(response.data.choices[0].message);
-    const raw_result = response.data.choices[0].message?.content as string;
-
-    let result: userData;
-
-    try{
-        const raw_result = response.data.choices[0].message?.content as string;
-        
         const starting_index = raw_result.indexOf('{');
         const ending_index = raw_result.indexOf('}') +1;
 
-        
         const json_string =  raw_result.slice(starting_index, ending_index);
-        
+
         result = JSON.parse(json_string) as userData;
-    }catch(err){
-        console.log(err);        
-        return {name: 'err', age: 0, emotionalState: '', extraInfo: '', gender: 'none', hobbies: [], userId: userId}
+
+        if(!result.age) result.age = 0;
+        if(!result.emotionalState ) result.emotionalState = "";
+        if(!result.extraInfo) result.extraInfo = "";
+        if(!result.gender) result.gender = "other"
+        if(!result.hobbies) result.hobbies = []
+        if(!result.name) result.name = "none"
+
+        result.userId = userId;
+
+        console.log(`name: "${result.name}" tokens: "${response.usage?.total_tokens}"`);
+    } catch(err) {
+        console.log(err);
+    } finally {
+        return result;
     }
-    
-    if(!result.age) result.age = 0;
-    if(!result.emotionalState ) result.emotionalState = "";
-    if(!result.extraInfo) result.extraInfo = "";
-    if(!result.gender) result.gender = "other"
-    if(!result.hobbies) result.hobbies = []
-    if(!result.name) result.name = "none"
-
-    result.userId = userId;
-
-    console.log(`name: "${result.name}" tokens: "${response.data.usage?.total_tokens}"`);
-    
-   return result;
 }
 
