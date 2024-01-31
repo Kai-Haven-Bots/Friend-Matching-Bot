@@ -5,4 +5,5 @@ package-lock.json
 .vscode
 908893077886861342.json
 intros.json
+.env
 users.db

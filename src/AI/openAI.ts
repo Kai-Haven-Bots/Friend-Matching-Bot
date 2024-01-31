@@ -2,6 +2,7 @@ import { Configuration, OpenAIApi } from "OpenAI";
 import * as path from 'path';
 import { userData } from "../index";
 import jsonlint from 'jsonlint';
+import { openAI_key } from "../configs/configs";
 
 require('dotenv')
     .config({
@@ -10,7 +11,7 @@ require('dotenv')
 
 
 const configuration = new Configuration({
-    apiKey: process.env.KEY,
+    apiKey: openAI_key,
 });
 const openai = new OpenAIApi(configuration);
 
@@ -65,8 +66,6 @@ export const intro_to_json = async (text: string, userId: string): Promise<userD
             ],
             temperature: 0
         });
-
-        console.log(response.data.choices[0].message);
         const raw_result = response.data.choices[0].message?.content as string;
 
         const starting_index = raw_result.indexOf('{');

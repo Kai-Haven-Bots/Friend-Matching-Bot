@@ -1,5 +1,5 @@
 import { Client, EmbedBuilder, EmbedField, Message } from "discord.js";
-import { INTRO_CHANNEL_ID, harvest_info, match, sequelize } from "..";
+import {harvest_info, match, sequelize } from "..";
 
 export const message_listen = (client: Client) => {
     client.on('messageCreate', async msg => {

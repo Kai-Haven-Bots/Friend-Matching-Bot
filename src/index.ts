@@ -24,12 +24,11 @@ import {
 import {
     message_edit_listen
 } from './events/message_edit';
+import { intro_channelIds, token } from './configs/configs';
 
 require('dotenv').config({
     path: path.join(__dirname, ".env")
 })
-
-export const INTRO_CHANNEL_ID = "908893077886861342";
 
 export const sequelize = new Sequelize({
     dialect: 'sqlite',
@@ -50,12 +49,8 @@ fs.readdirSync(path_to_models)
 
 sequelize.sync({
     alter: true
-}).then(sequelize => {
-    client.login(process.env._TOKEN);
-    match(["movies", "games"], 5).then(s => {
-        console.log(s);
-    });
-
+}).then(async sequelize => {
+    await client.login(token);
 })
 
 
@@ -67,9 +62,9 @@ const client = new Client({
 
 client.once('ready', async (client) => {
     console.log("ready");
+
     message_listen(client);
     message_edit_listen(client);
-
     // const channel = (await client.channels.fetch("908893077886861342")) as GuildTextBasedChannel;
     // const messages = await channel.messages.fetch({limit: 100})
 
@@ -79,11 +74,14 @@ client.once('ready', async (client) => {
     
 })
 
+export const is_intro_channel = (channelId: string) => intro_channelIds.some(v => v===channelId);
+
 export const harvest_info = async (msg: Message | PartialMessage) => {
     if (!msg.content) return;
     if(msg.content === '') return;
     if (!msg.author) return;
-    if (msg.channelId !== INTRO_CHANNEL_ID && msg.channelId !== "1008752982000676894") return;
+    if(!is_intro_channel(msg.channelId)) return;
+
     console.log(msg.content);
     
     
