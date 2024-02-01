@@ -1,4 +1,4 @@
-import { Configuration, OpenAIApi } from "OpenAI";
+import { Configuration, OpenAIApi } from "openai";
 import * as path from 'path';
 import { userData } from "../index";
 import jsonlint from 'jsonlint';
